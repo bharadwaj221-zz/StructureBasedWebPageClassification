@@ -1,0 +1,766 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass llncs
+\begin_preamble
+ 
+ 
+
+
+ 
+\end_preamble
+\options oribibl
+\use_default_options false
+\maintain_unincluded_children false
+\language english
+\language_package none
+\inputencoding auto
+\fontencoding default
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref section
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 0
+\use_mathdots 0
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+A Multilevel Classification Method for Classifying Web Pages
+\end_layout
+
+\begin_layout Abstract
+Given, a large set of web pages in the retail domain, our aim is to classify
+ them into Product Pages, Product Listing Pages and Irrelevant Pages.
+ We had earlier proposed a multilevel classification scheme for the same,
+ where we attempt to classify based on the less informative parts of the
+ web page, and if unsuccessful, start looking at the page content.
+ The scope of this report, is restricted to the latter, where we classify
+ based on the web page content only.
+ Also, we focus on the elimination of irrelevant pages, by constructing
+ one-class Support Vector Machine classifiers on the Product page and Listing
+ page data.
+ This can be viewed as a 
+\shape italic
+Novelty Detection Problem
+\shape default
+, where the irrelevant pages do not have any model for themselves, but are
+ treated as outliers or abnormalties.
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+One Class Support Vector Machines was first proposed by Schölkopf et al
+\begin_inset CommandInset citation
+LatexCommand cite
+key "a"
+
+\end_inset
+
+.
+ This method constructs a function, that is positive for a small subset
+ of the data and negative everywhere else.
+ This can be visualized, as a small ball or hypersphere around the positive
+ class, separating them from the negative class.
+ This is particularly useful when the negative class is extremely large,
+ compared to the positive data or when it is not possible to generate sufficient
+ data for one of the two classes to train a binary classifier.
+ In our problem, the irrelevant pages are the negative pages.
+ They include all webpages that are not product or product listing pages,
+ which is massive compared to the positive class.
+ Training a model, that captures features of all such pages is almost impossible.
+ Hence, they are treated as outliers and the problem itself is reduced to
+ a Novelty Detection Problem.
+ 
+\end_layout
+
+\begin_layout Standard
+The data used for training consisted of 2875 webpages, out of which 1433
+ were product pages and the remaining 1442 were product listing pages.
+ These were obtained from around 300 different retailers.
+ Also for testing, 50 different irrelevant pages were obtained from popular
+ retail websites like flipkart, amazon and ebay.
+ These included pages such as user information pages, career pages, shipping
+ rates, policies, press releases etc.
+ Natural Language Toolkit was used for extracting the features and Scikit
+ Learn package, based on LIBSVM 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "c"
+
+\end_inset
+
+ was used for training the one-class SVM on the product and product listing
+ pages.
+\end_layout
+
+\begin_layout Section
+Methodology
+\end_layout
+
+\begin_layout Standard
+The entire webpage classification process can be divided into the following
+ four stages: 
+\emph on
+Document-Vector matrix creation, feature extraction, training classifiers
+ on the reduced data, testing on new data.
+
+\emph default
+ 
+\end_layout
+
+\begin_layout Subsection
+Document-Vector model
+\end_layout
+
+\begin_layout Standard
+Document-Vector model is used to represent the presence or frequency of
+ words in a set of documents.
+ It is called bag-of-words representation, where the rows of a matrix represent
+ a document, and the columns represent the words in the document.
+ The cell values can be either 0/1 indicating absence or presence of words
+ in documents or they can also hold the frequency of words in documents.
+ In this experiment, we use the 0/1 based bag of words model, where each
+ row represents a unique web page and the columns represent the words in
+ the webpages.
+ Thus, we generate two sets of document-vector matrices: one for the product
+ pages and one for product-listing pages.
+ 
+\end_layout
+
+\begin_layout Subsection
+Feature Extraction
+\end_layout
+
+\begin_layout Standard
+For a html document features can be of two types: 
+\shape italic
+Text Features,
+\shape default
+ captured by the bag of words model, and 
+\shape italic
+Structural Features
+\shape default
+.
+ The structural features themselves, might not carry much information about
+ the webpage.
+ However, when combined with the text features,they are expected to improve
+ the results.
+ At present, the focus is on text features only.
+ However, in future, ways to combine both these sets of features and train
+ the model on the combined feature set will be explored.
+\end_layout
+
+\begin_layout Standard
+The html document may contain stop words, punctuation marks, digits and
+ empty spaces, which do not contribute to the classification.
+ Hence, it is necessary to remove features corresponding to these, while
+ vectorizing the document.
+ 
+\end_layout
+
+\begin_layout Subsection
+Training and Testing
+\end_layout
+
+\begin_layout Standard
+The first matrix will have 1483 rows, corresponding to 1433 product pages
+ and 50 test pages and the second matrix will contain 1492 rows, corresponding
+ to 1442 listing pages and the same 50 webpages.
+ For training the product pages model, we took out 133 product pages and
+ used them as test data along with the generated test pages.
+ Similarly, for the listing pages 150 were taken out for testing.
+ It is necessary to shuffle the pages, before taking out the test pages,
+ so as to have a mix of all retailers in the training data.
+\end_layout
+
+\begin_layout Standard
+One class SVMs using Radial Basis Function kernel
+\begin_inset CommandInset citation
+LatexCommand cite
+key "b"
+
+\end_inset
+
+, were trained on these two datasets.
+ Model parameters 
+\begin_inset Formula $\nu$
+\end_inset
+
+ and 
+\begin_inset Formula $\gamma$
+\end_inset
+
+ were varied and the models generated were tried on the test data taken
+ out.
+ Since, we need to minimize both false positives and false negatives, the
+ model with the highest f-measure was considered as the best model and its
+ results are shown below.
+\end_layout
+
+\begin_layout Section
+Experiments and Results
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Predictions on the test data
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="3" columns="7">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Value for positive class
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Total Positives
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Total Negatives
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+True Positives
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+True Negatives 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+False Positives
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+False Negatives
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Product Page Classifier
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+133
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+50
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+115
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+32
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+18
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+18
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Listing Page Classifier
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+150
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+50
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+131
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+41
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+19
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Precision, Recall and F1-Score for One Class SVMs with the indicated positive
+ class
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="3" columns="4">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Value for positive class
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Precision
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Recall 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+f-Measure
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Product Page Classifier
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.865
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.865
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.865
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Listing Page Classifier
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.873
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.992
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0.929
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Conclusions and Future Work
+\end_layout
+
+\begin_layout Standard
+The classifiers developed are adequate for eliminating irrelevant webpages.
+ However, the biggest challenge is develop a classifier that will differentiate
+ between product webpages and product-listing webpages.
+ There is a large overlap between the two classes, as the product listing
+ pages themselves may contain descriptions of a number of products.
+ Hence, content specific features alone are not sufficient to differentiate
+ between the two classes.
+ We need to extract features that carry information about the structure
+ of the webpages.
+ One such approach would be, to use the html tag distribution by calculating
+ the tag to text ratio in web pages.
+\end_layout
+
+\begin_layout Standard
+In addition, the multilevel scheme of classification also needs to be implemente
+d.
+ Along with a series of classifiers at each level, we also need to develop
+ a confidence measure that indicates the efficiency of classification at
+ each level.
+ On close examination of the webpage URLs, one can be assured that this
+ will produce good results for a good percentage of product and listing
+ pages, as the URLs themeselves carry text with sufficient discriminating
+ power.
+ For example, many of the product page URLs will have the text 'productId='
+ in the URL.
+ Similarly, many product listing pages have 'categoryId' in their URLs.
+ The confidence measure should be sufficiently high for such classifications.
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "1"
+key "a"
+
+\end_inset
+
+ B.
+ Schölkopf, R.C.
+ Williamson, A.J.
+ Smola, J.Shawe-Taylor and J.C.
+ Platt.
+ Support Vector Method for Novelty Detection .
+ Technical report, Microsoft Research, MSR-TR-99-87, 1999.
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "2"
+key "b"
+
+\end_inset
+
+ L.
+ M.
+ Manevitz and M.
+ Yousef.
+ One-class SVMs for document classification.
+ Journal of MachineLearning Research,2:139-154, 2001
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+label "3"
+key "c"
+
+\end_inset
+
+ C.C.
+ Chang and C.
+ J.
+ Lin.
+ LIBSVM: A Library for Support Vector Machines (2013) 
+\end_layout
+
+\end_body
+\end_document
